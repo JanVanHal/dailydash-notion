@@ -32,7 +32,7 @@ De laatste goede koers, het weer en het nieuws staan apart in `dailydash_cache_v
 - Wisselkoers: [Frankfurter](https://www.frankfurter.app/) (`api.frankfurter.app`), reserve [ExchangeRate-API](https://www.exchangerate-api.com/) (`open.er-api.com`).
 - Weer: [Open-Meteo](https://open-meteo.com/).
 - Radar: [RainViewer](https://www.rainviewer.com/) en [Buienradar](https://www.buienradar.nl/).
-- Nieuws: NOS-RSS via [rss2json](https://rss2json.com/). Rubrieken: algemeen, politiek, wereld, economie, voetbal, wielrennen, schaatsen en sport algemeen.
+- Nieuws: NOS-RSS via [rss2json](https://rss2json.com/). Rubrieken: algemeen, politiek, wereld (`nosnieuwsbuitenland`), economie, voetbal (`nosvoetbal`), wielrennen, schaatsen en sport algemeen. Een rubriek die niet laadt toont een fout met **Opnieuw proberen**, alleen voor die rubriek.
 
 ## Bestanden
 

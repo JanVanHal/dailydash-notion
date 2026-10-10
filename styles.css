@@ -355,6 +355,69 @@ html[data-theme="dark"] .tool-panel {
   text-transform: uppercase;
 }
 
+/* Section accents reuse existing tokens. Dark lightens the same colour. */
+[data-tone="blue"] { --tone-base: var(--nt-blue); }
+[data-tone="saffron"] { --tone-base: var(--nt-saffron); }
+[data-tone="vermillion"] { --tone-base: var(--nt-vermillion); }
+[data-tone="sky"] { --tone-base: var(--nt-sky-wash); }
+[data-tone="coral"] { --tone-base: var(--nt-coral); }
+[data-tone="marigold"] { --tone-base: var(--nt-marigold); }
+[data-tone="mocha"] { --tone-base: var(--nt-mocha); }
+[data-tone="signal"] { --tone-base: var(--nt-signal-blue); }
+
+[data-tone] { --tone: var(--tone-base, var(--nt-blue)); }
+
+html[data-theme="dark"] [data-tone] {
+  --tone: color-mix(in srgb, var(--tone-base, var(--nt-blue)) 68%, white);
+}
+
+.tone-label,
+.widget[data-tone] .widget-head .caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: var(--nt-radius-pill);
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+  color: color-mix(in srgb, var(--tone) 72%, var(--nt-ink));
+}
+
+.clock[data-tone] .caption {
+  padding: 1px 6px;
+  border-radius: var(--nt-radius-pill);
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+  color: color-mix(in srgb, var(--tone) 72%, var(--nt-ink));
+}
+
+html[data-theme="dark"] .tone-label,
+html[data-theme="dark"] .widget[data-tone] .widget-head .caption,
+html[data-theme="dark"] .clock[data-tone] .caption {
+  color: var(--tone);
+}
+
+.tone-label svg {
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+  flex: none;
+}
+
+.widget[data-tone] .widget-head,
+.cat-block[data-tone] .cat-head {
+  border-left: 4px solid var(--tone);
+}
+
+.widget[data-tone] .widget-head { padding-left: 10px; }
+
+.clock[data-tone] { border-left: 4px solid var(--tone); }
+
+html[data-theme="dark"] .clock[data-tone] {
+  border-left-width: 4px;
+  border-left-color: var(--tone);
+}
+
 .topbar {
   position: sticky;
   top: 0;
@@ -432,7 +495,7 @@ html[data-theme="dark"] .tool-panel {
   white-space: nowrap;
 }
 
-.clock svg { width: 16px; height: 16px; color: var(--nt-blue); flex: none; }
+.clock svg { width: 16px; height: 16px; color: var(--tone, var(--nt-blue)); flex: none; }
 
 .clock time {
   display: block;
@@ -485,7 +548,7 @@ html[data-theme="dark"] .tool-panel {
   min-width: 0;
 }
 
-.widget-id svg { width: 18px; height: 18px; color: var(--nt-blue); flex: none; }
+.widget-id svg { width: 18px; height: 18px; color: var(--tone, var(--nt-blue)); flex: none; }
 
 .widget-id .condition,
 .pair {
@@ -728,10 +791,11 @@ html[data-theme="dark"] .kicker-sport { color: var(--nt-blue); }
 
 .cat-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 20px 4px;
+  margin: 12px 16px 0;
+  padding: 2px 4px 2px 10px;
 }
 
 .article {

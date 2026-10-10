@@ -42,14 +42,14 @@
       </div>
       <div class="controls">
         <div class="clocks">
-          <div id="clock-1-container" class="clock tool-panel">
+          <div id="clock-1-container" class="clock tool-panel" data-tone="mocha">
             <i data-lucide="map-pin" aria-hidden="true"></i>
             <div>
               <div id="label-clock-1" class="caption">Chiang Rai</div>
               <time id="clock-1-val" datetime="">00:00:00</time>
             </div>
           </div>
-          <div id="clock-2-container" class="clock tool-panel">
+          <div id="clock-2-container" class="clock tool-panel" data-tone="mocha">
             <i data-lucide="globe" aria-hidden="true"></i>
             <div>
               <div id="label-clock-2" class="caption">Amsterdam</div>
@@ -80,7 +80,7 @@
 
     <div id="layout" class="layout">
       <div id="widgets-container" class="widgets">
-        <section id="card-currency" class="widget tool-panel" aria-labelledby="currency-heading">
+        <section id="card-currency" class="widget tool-panel" data-tone="saffron" aria-labelledby="currency-heading">
           <div class="widget-head">
             <div class="widget-id">
               <i data-lucide="coins" aria-hidden="true"></i>
@@ -118,7 +118,7 @@
           </div>
         </section>
 
-        <section id="card-weather-1" class="widget tool-panel" aria-labelledby="w1-title">
+        <section id="card-weather-1" class="widget tool-panel" data-tone="coral" aria-labelledby="w1-title">
           <div class="widget-head">
             <div class="widget-id">
               <span class="icon-slot" data-slot="w1" aria-hidden="true"></span>
@@ -143,7 +143,7 @@
           <p id="w1-updated" class="muted"></p>
         </section>
 
-        <section id="card-weather-2" class="widget tool-panel" aria-labelledby="w2-title">
+        <section id="card-weather-2" class="widget tool-panel" data-tone="signal" aria-labelledby="w2-title">
           <div class="widget-head">
             <div class="widget-id">
               <span class="icon-slot" data-slot="w2" aria-hidden="true"></span>
@@ -394,17 +394,17 @@
     };
 
     var NL_CATEGORIES = [
-      { id: 'nl-algemeen', title: 'Algemeen', group: 'nl', feedUrl: 'https://feeds.nos.nl/nosnieuwsalgemeen' },
-      { id: 'nl-politiek', title: 'Politiek', group: 'nl', feedUrl: 'https://feeds.nos.nl/nosnieuwspolitiek' },
-      { id: 'nl-wereld', title: 'Wereld', group: 'nl', feedUrl: 'https://feeds.nos.nl/nosnieuwswereld' },
-      { id: 'nl-economie', title: 'Economie', group: 'nl', feedUrl: 'https://feeds.nos.nl/nosnieuwseconomie' }
+      { id: 'nl-algemeen', title: 'Algemeen', group: 'nl', tone: 'blue', icon: 'newspaper', feedUrl: 'https://feeds.nos.nl/nosnieuwsalgemeen' },
+      { id: 'nl-politiek', title: 'Politiek', group: 'nl', tone: 'vermillion', icon: 'landmark', feedUrl: 'https://feeds.nos.nl/nosnieuwspolitiek' },
+      { id: 'nl-wereld', title: 'Wereld', group: 'nl', tone: 'sky', icon: 'globe', feedUrl: 'https://feeds.nos.nl/nosnieuwsbuitenland' },
+      { id: 'nl-economie', title: 'Economie', group: 'nl', tone: 'saffron', icon: 'badge-euro', feedUrl: 'https://feeds.nos.nl/nosnieuwseconomie' }
     ];
 
     var SPORT_CATEGORIES = [
-      { id: 'sport-voetbal', title: 'Voetbal', group: 'sport', feedUrl: 'https://feeds.nos.nl/nossportvoetbal' },
-      { id: 'sport-wielrennen', title: 'Wielrennen', group: 'sport', feedUrl: 'https://feeds.nos.nl/nossportwielrennen' },
-      { id: 'sport-schaatsen', title: 'Schaatsen', group: 'sport', feedUrl: 'https://feeds.nos.nl/nossportschaatsen' },
-      { id: 'sport-overig', title: 'Sport algemeen', group: 'sport', feedUrl: 'https://feeds.nos.nl/nossportalgemeen' }
+      { id: 'sport-voetbal', title: 'Voetbal', group: 'sport', tone: 'marigold', icon: 'goal', feedUrl: 'https://feeds.nos.nl/nosvoetbal' },
+      { id: 'sport-wielrennen', title: 'Wielrennen', group: 'sport', tone: 'mocha', icon: 'bike', feedUrl: 'https://feeds.nos.nl/nossportwielrennen' },
+      { id: 'sport-schaatsen', title: 'Schaatsen', group: 'sport', tone: 'signal', icon: 'snowflake', feedUrl: 'https://feeds.nos.nl/nossportschaatsen' },
+      { id: 'sport-overig', title: 'Sport algemeen', group: 'sport', tone: 'coral', icon: 'trophy', feedUrl: 'https://feeds.nos.nl/nossportalgemeen' }
     ];
 
     var ALL_CATEGORIES = NL_CATEGORIES.concat(SPORT_CATEGORIES);
@@ -1069,11 +1069,17 @@
           var block = document.createElement('section');
           block.id = 'cat-block-' + cat.id;
           block.className = 'cat-block';
+          block.dataset.tone = cat.tone;
           var head = document.createElement('div');
           head.className = 'cat-head';
           var title = document.createElement('h3');
-          title.className = 'caption';
-          title.textContent = cat.title;
+          title.className = 'caption tone-label';
+          var icon = document.createElement('i');
+          icon.setAttribute('data-lucide', cat.icon);
+          icon.setAttribute('aria-hidden', 'true');
+          var label = document.createElement('span');
+          label.textContent = cat.title;
+          title.append(icon, label);
           var count = document.createElement('span');
           count.className = 'muted';
           count.dataset.countFor = cat.id;
@@ -1201,7 +1207,11 @@
         }
       } finally {
         state.newsInflight.delete(cat.id);
+        if (!state.news[cat.id] || state.news[cat.id].status === 'loading') {
+          state.news[cat.id] = { status: 'error', items: [] };
+        }
         renderCategory(cat);
+        updateNewsCounts();
       }
     }
 
