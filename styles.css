@@ -94,27 +94,6 @@
   --nt-dur: 200ms;
 }
 
-/* Medium: soft light grey. Accents stay the Light tokens. No beige or peach. */
-html[data-theme="medium"] {
-  color-scheme: light;
-  --nt-canvas: #ececeb;
-  --nt-surface: #f7f7f6;
-  --nt-ink: #111111;
-  --nt-ink-95: rgba(17, 17, 17, 0.95);
-  --nt-ink-90: rgba(17, 17, 17, 0.90);
-  --nt-ink-60: rgba(17, 17, 17, 0.60);
-  --nt-ink-54: rgba(17, 17, 17, 0.54);
-  --nt-ink-40: rgba(17, 17, 17, 0.40);
-  --nt-ink-20: rgba(17, 17, 17, 0.20);
-  --nt-charcoal: #111111;
-  --nt-graphite: #615d59;
-  --nt-stone: #615d59;
-  --nt-slate: #615d59;
-  --nt-border: rgba(0, 0, 0, 0.08);
-  --nt-peach: #e4e4e2;
-  --nt-shadow-nav: 0px 1px 2px rgb(0 0 0 / 0.04), 0px 8px 18px rgb(0 0 0 / 0.05);
-}
-
 /* Dark: Notion near-black. Not pure black, not navy. */
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -319,12 +298,6 @@ html[data-theme="dark"] .icon-btn[aria-pressed="true"] {
   color: #ffffff;
 }
 
-.icon-btn[aria-pressed="mixed"] {
-  background: var(--nt-blue-tint);
-  border-color: var(--nt-blue);
-  color: var(--nt-blue);
-}
-
 .icon-btn:disabled { cursor: progress; opacity: 0.7; }
 
 .icon-btn svg { width: 18px; height: 18px; }
@@ -462,15 +435,7 @@ html[data-theme="dark"] .clock[data-tone] {
 .brand {
   display: flex;
   align-items: center;
-  gap: var(--nt-space-12);
   min-width: 0;
-}
-
-.brand img {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  flex: none;
 }
 
 .brand h1 {

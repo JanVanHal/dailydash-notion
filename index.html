@@ -11,8 +11,10 @@
         var saved = JSON.parse(localStorage.getItem('dashboard_config_v3') || 'null');
         if (!saved) return;
         var root = document.documentElement;
-        var themeColors = { light: '#f6f5f4', medium: '#ececeb', dark: '#191919' };
-        if (saved.theme === 'light' || saved.theme === 'medium' || saved.theme === 'dark') {
+        var migrated = saved.theme === 'medium';
+        if (migrated) saved.theme = 'light';
+        var themeColors = { light: '#f6f5f4', dark: '#191919' };
+        if (saved.theme === 'light' || saved.theme === 'dark') {
           root.dataset.theme = saved.theme;
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) meta.setAttribute('content', themeColors[saved.theme]);
@@ -21,6 +23,7 @@
         if (saved.articleTextSize === 'sm' || saved.articleTextSize === 'md' || saved.articleTextSize === 'lg') {
           root.dataset.textSize = saved.articleTextSize;
         }
+        if (migrated) localStorage.setItem('dashboard_config_v3', JSON.stringify(saved));
       } catch (error) {}
     })();
   </script>
@@ -37,7 +40,6 @@
   <div id="app" class="wrap">
     <header class="topbar">
       <div class="brand">
-        <img src="img/dailydash-icon.svg" width="36" height="36" alt="">
         <div>
           <h1>Dagelijks Overzicht</h1>
           <p id="current-date">Datum laden…</p>
@@ -64,7 +66,7 @@
           <button id="btn-refresh" type="button" class="icon-btn" aria-label="Gegevens verversen">
             <span class="icon-slot" data-slot="refresh" aria-hidden="true"></span>
           </button>
-          <button id="btn-theme" type="button" class="icon-btn" aria-label="Thema: donker. Wissel naar licht." aria-pressed="true">
+          <button id="btn-theme" type="button" class="icon-btn" aria-label="Wissel thema (Licht / Donker)" title="Wissel thema (Licht / Donker)" aria-pressed="true">
             <span class="icon-slot" data-slot="theme" aria-hidden="true"></span>
           </button>
           <button id="btn-toggle-layout" type="button" class="icon-btn" aria-label="2 kolommen. Wissel naar 3 kolommen met widgets rechts." aria-pressed="false">
@@ -454,7 +456,8 @@
     }
 
     function normalizeConfig(config) {
-      if (config.theme !== 'light' && config.theme !== 'medium' && config.theme !== 'dark') config.theme = 'dark';
+      if (config.theme === 'medium') config.theme = 'light';
+      if (config.theme !== 'light' && config.theme !== 'dark') config.theme = 'dark';
       if (config.articleTextSize !== 'sm' && config.articleTextSize !== 'md' && config.articleTextSize !== 'lg') {
         config.articleTextSize = 'md';
       }
@@ -481,7 +484,9 @@
     function loadConfig() {
       var saved = null;
       try { saved = JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null'); } catch (error) { saved = null; }
+      var migrated = !!(saved && saved.theme === 'medium');
       state.config = normalizeConfig(mergeConfig(DEFAULT_CONFIG, saved));
+      if (migrated) saveConfig();
     }
 
     function saveConfig() {
@@ -514,29 +519,28 @@
 
     /* —— theme —— */
 
-    var THEME_ORDER = ['light', 'medium', 'dark'];
+    var THEME_LABEL = 'Wissel thema (Licht / Donker)';
     var THEME_META = {
-      light: { next: 'medium', icon: 'sun', pressed: 'false', label: 'Thema: licht. Wissel naar medium.', color: '#f6f5f4' },
-      medium: { next: 'dark', icon: 'sun-medium', pressed: 'mixed', label: 'Thema: medium. Wissel naar donker.', color: '#ececeb' },
-      dark: { next: 'light', icon: 'moon', pressed: 'true', label: 'Thema: donker. Wissel naar licht.', color: '#191919' }
+      light: { icon: 'sun', pressed: 'false', color: '#f6f5f4' },
+      dark: { icon: 'moon', pressed: 'true', color: '#191919' }
     };
 
     function applyTheme() {
-      var theme = state.config.theme;
+      var theme = state.config.theme === 'light' ? 'light' : 'dark';
+      state.config.theme = theme;
       var meta = THEME_META[theme];
       document.documentElement.dataset.theme = theme;
       var button = $('btn-theme');
       button.setAttribute('aria-pressed', meta.pressed);
-      button.setAttribute('aria-label', meta.label);
-      button.title = meta.label;
+      button.setAttribute('aria-label', THEME_LABEL);
+      button.title = THEME_LABEL;
       setIcon('theme', meta.icon);
       var color = document.querySelector('meta[name="theme-color"]');
       if (color) color.setAttribute('content', meta.color);
     }
 
     function cycleTheme() {
-      var index = THEME_ORDER.indexOf(state.config.theme);
-      state.config.theme = THEME_ORDER[(index + 1) % THEME_ORDER.length];
+      state.config.theme = state.config.theme === 'dark' ? 'light' : 'dark';
       saveConfig();
       applyTheme();
       paintIcons();
