@@ -50,4 +50,5 @@ Structure: still a single `index.html` plus `styles.css` (and the icon). Vanilla
 - Fix requests will be added under "Fix list". When asked to "apply the fix list", do every unchecked item, tick it (`- [x]`) and push.
 
 ## Fix list
-_(empty)_
+- [ ] **Voetbal feed is broken**: `https://feeds.nos.nl/nossportvoetbal` returns 404 (checked 2026-10-10). Change the Voetbal source to **`https://feeds.nos.nl/nosvoetbal`** (returns 200). Also check every other feed URL once; if a feed fails, show the Dutch error with "Opnieuw proberen" for that section only (don't leave it on a spinner).
+- [ ] **More colour, Notion-style**: give each news subsection header its own accent colour from the existing `--nt-*` tokens, applied as a small coloured pill or a 3–4 px left border plus a tinted icon (not full coloured backgrounds). Suggested mapping: Algemeen `--nt-blue`, Economie `--nt-saffron`, Politiek `--nt-vermillion`, Wereld `--nt-sky-wash`, Sport algemeen `--nt-coral`, Voetbal `--nt-marigold`, Wielrennen `--nt-mocha`, Schaatsen `--nt-signal-blue`. Do the same for the widget headers (Wisselkoers, Chiang Rai, Noordwijk aan Zee, Klokken). Keep it readable in all 3 themes (lighter tints in Dark). No new colours or fonts.
