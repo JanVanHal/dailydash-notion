@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="dark" data-layout="2" data-text-size="md">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#02093a">
+  <title>Dagelijks Overzicht</title>
+  <script>
+    (function () {
+      try {
+        var saved = JSON.parse(localStorage.getItem('dashboard_config_v3') || 'null');
+        if (!saved) return;
+        var root = document.documentElement;
+        if (saved.theme === 'light' || saved.theme === 'medium' || saved.theme === 'dark') {
+          root.dataset.theme = saved.theme;
+        }
+        root.dataset.layout = saved.threeColumnLayout ? '3' : '2';
+        if (saved.articleTextSize === 'sm' || saved.articleTextSize === 'md' || saved.articleTextSize === 'lg') {
+          root.dataset.textSize = saved.articleTextSize;
+        }
+      } catch (error) {}
+    })();
+  </script>
+  <link rel="icon" href="img/dailydash-icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#layout">Naar de inhoud</a>
+  <p id="status-live" class="sr-only" role="status" aria-live="polite"></p>
+
+  <div id="app" class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <img src="img/dailydash-icon.svg" width="36" height="36" alt="">
+        <div>
+          <h1>Dagelijks Overzicht</h1>
+          <p id="current-date">Datum laden…</p>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="clocks">
+          <div id="clock-1-container" class="clock tool-panel">
+            <i data-lucide="map-pin" aria-hidden="true"></i>
+            <div>
+              <div id="label-clock-1" class="caption">Chiang Rai</div>
+              <time id="clock-1-val" datetime="">00:00:00</time>
+            </div>
+          </div>
+          <div id="clock-2-container" class="clock tool-panel">
+            <i data-lucide="globe" aria-hidden="true"></i>
+            <div>
+              <div id="label-clock-2" class="caption">Amsterdam</div>
+              <time id="clock-2-val" datetime="">00:00:00</time>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="btn-refresh" type="button" class="icon-btn" aria-label="Gegevens verversen">
+            <span class="icon-slot" data-slot="refresh" aria-hidden="true"></span>
+          </button>
+          <button id="btn-theme" type="button" class="icon-btn" aria-label="Thema: donker. Wissel naar licht." aria-pressed="true">
+            <span class="icon-slot" data-slot="theme" aria-hidden="true"></span>
+          </button>
+          <button id="btn-toggle-layout" type="button" class="icon-btn" aria-label="2 kolommen. Wissel naar 3 kolommen met widgets rechts." aria-pressed="false">
+            <span class="icon-slot" data-slot="layout" aria-hidden="true"></span>
+          </button>
+          <button id="btn-text-size" type="button" class="icon-btn" aria-label="Tekstgrootte artikelen: Normaal. Wissel naar groot.">
+            <span class="icon-slot" data-slot="text" aria-hidden="true"></span>
+            <span id="text-size-indicator" class="size-badge">M</span>
+          </button>
+          <button id="btn-open-settings" type="button" class="icon-btn" aria-label="Dashboard instellingen openen" aria-haspopup="dialog" aria-controls="settings-dialog" aria-expanded="false">
+            <span class="icon-slot" data-slot="settings" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div id="layout" class="layout">
+      <div id="widgets-container" class="widgets">
+        <section id="card-currency" class="widget tool-panel" aria-labelledby="currency-heading">
+          <div class="widget-head">
+            <div class="widget-id">
+              <i data-lucide="coins" aria-hidden="true"></i>
+              <div>
+                <h2 id="currency-heading" class="caption">Wisselkoers</h2>
+                <p id="currency-pair-title" class="pair">EUR / THB</p>
+              </div>
+            </div>
+            <span id="rate-badge" class="badge">Live</span>
+          </div>
+          <div>
+            <p class="figure"><span id="eur-thb-rate">–</span> <span id="target-currency-label">THB</span></p>
+            <p id="rate-updated" class="muted">Laden…</p>
+          </div>
+          <div class="calc">
+            <p class="caption">Snel omrekenen</p>
+            <div class="calc-row">
+              <label class="amount">
+                <span class="sr-only">Euro naar baht</span>
+                <em>€</em>
+                <input id="calc-eur-input" type="number" min="0" step="any" value="100" inputmode="decimal">
+              </label>
+              <i data-lucide="arrow-right" aria-hidden="true"></i>
+              <div class="calc-out"><span id="calc-thb-output">0,00</span> ฿</div>
+            </div>
+            <div class="calc-row">
+              <label class="amount">
+                <span class="sr-only">Baht naar euro</span>
+                <em>฿</em>
+                <input id="calc-thb-input" type="number" min="0" step="any" value="1000" inputmode="decimal">
+              </label>
+              <i data-lucide="arrow-right" aria-hidden="true"></i>
+              <div class="calc-out"><span id="calc-eur-output">0,00</span> €</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="card-weather-1" class="widget tool-panel" aria-labelledby="w1-title">
+          <div class="widget-head">
+            <div class="widget-id">
+              <span class="icon-slot" data-slot="w1" aria-hidden="true"></span>
+              <div>
+                <h2 id="w1-title" class="caption">Chiang Rai</h2>
+                <p id="w1-condition" class="condition">Laden…</p>
+              </div>
+            </div>
+            <a id="w1-radar-link" class="radar" href="https://www.rainviewer.com/weather-radar-map-live/thailand/chiang-rai.html" target="_blank" rel="noopener noreferrer">Radar</a>
+          </div>
+          <div class="split">
+            <div>
+              <p class="figure"><span id="w1-temp">–</span><span>°C</span></p>
+              <p id="w1-subtext" class="muted">Min – / max –</p>
+            </div>
+            <div class="stats">
+              <div><i data-lucide="wind" aria-hidden="true"></i> <span id="w1-wind">– km/h</span></div>
+              <div><i data-lucide="droplets" aria-hidden="true"></i> <span id="w1-rain">–%</span></div>
+            </div>
+          </div>
+          <div id="w1-forecast" class="forecast"></div>
+          <p id="w1-updated" class="muted"></p>
+        </section>
+
+        <section id="card-weather-2" class="widget tool-panel" aria-labelledby="w2-title">
+          <div class="widget-head">
+            <div class="widget-id">
+              <span class="icon-slot" data-slot="w2" aria-hidden="true"></span>
+              <div>
+                <h2 id="w2-title" class="caption">Noordwijk aan Zee</h2>
+                <p id="w2-condition" class="condition">Laden…</p>
+              </div>
+            </div>
+            <a id="w2-radar-link" class="radar" href="https://www.buienradar.nl/weer/noordwijk/nl/2749870" target="_blank" rel="noopener noreferrer">Buienradar</a>
+          </div>
+          <div class="split">
+            <div>
+              <p class="figure"><span id="w2-temp">–</span><span>°C</span></p>
+              <p id="w2-subtext" class="muted">Min – / max –</p>
+            </div>
+            <div class="stats">
+              <div><i data-lucide="wind" aria-hidden="true"></i> <span id="w2-wind">– km/h</span></div>
+              <div><i data-lucide="droplets" aria-hidden="true"></i> <span id="w2-rain">–%</span></div>
+            </div>
+          </div>
+          <div id="w2-forecast" class="forecast"></div>
+          <p id="w2-updated" class="muted"></p>
+        </section>
+      </div>
+
+      <div id="news-grid" class="news">
+        <section id="col-nl-news" class="news-col tool-panel" aria-labelledby="nl-heading">
+          <header class="news-col-head">
+            <div>
+              <span class="kicker">NOS</span>
+              <h2 id="nl-heading">Nederlands Nieuws</h2>
+            </div>
+            <span id="nl-count" class="caption">Laden…</span>
+          </header>
+          <div id="nl-categories-container"></div>
+        </section>
+        <section id="col-sport-news" class="news-col tool-panel" aria-labelledby="sport-heading">
+          <header class="news-col-head">
+            <div>
+              <span class="kicker kicker-sport">NOS</span>
+              <h2 id="sport-heading">Sportnieuws</h2>
+            </div>
+            <span id="sport-count" class="caption">Laden…</span>
+          </header>
+          <div id="sport-categories-container"></div>
+        </section>
+      </div>
+    </div>
+
+    <footer class="dash-footer">
+      <p>Dagelijks Overzicht — Chiang Rai &amp; Nederland</p>
+      <p>Bronnen: Open-Meteo, RainViewer, Buienradar, NOS, Frankfurter, ExchangeRate-API</p>
+      <p>Laatst ververst <time id="last-updated-time">–</time></p>
+    </footer>
+  </div>
+
+  <div id="settings-root" class="settings-root" hidden>
+    <div id="settings-backdrop" class="settings-backdrop"></div>
+    <div id="settings-dialog" class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="settings-head">
+        <div>
+          <h2 id="settings-title">Dashboard Instellingen</h2>
+          <p>Wijzigingen gelden pas na opslaan. Annuleren doet ze weg.</p>
+        </div>
+        <button id="btn-close-settings" type="button" class="icon-btn" aria-label="Sluiten">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+      <form id="settings-form" class="settings-body">
+        <p id="settings-error" class="settings-error" role="alert"></p>
+
+        <section class="settings-block">
+          <h3 class="caption"><i data-lucide="sliders-horizontal" aria-hidden="true"></i> Weergave &amp; Kolommen</h3>
+          <div class="sheet">
+            <label class="check-row" for="cfg-layout-3col"><span>3-koloms weergave (widgets rechts)</span>
+              <input id="cfg-layout-3col" type="checkbox">
+            </label>
+            <label class="check-row" for="cfg-show-photos"><span>Foto tonen bij 1e artikel</span>
+              <input id="cfg-show-photos" type="checkbox">
+            </label>
+            <label class="field-label" for="cfg-text-size">Tekstgrootte artikelen</label>
+            <select id="cfg-text-size" class="field">
+              <option value="sm">Klein (S)</option>
+              <option value="md">Normaal (M)</option>
+              <option value="lg">Groot (L)</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="settings-block">
+          <h3 class="caption"><i data-lucide="clock" aria-hidden="true"></i> Klokken &amp; Tijdzones</h3>
+          <div class="sheet">
+            <div>
+              <label class="field-label" for="cfg-clock1-label">Klok 1, naam</label>
+              <input id="cfg-clock1-label" class="field" type="text" autocomplete="off">
+            </div>
+            <div>
+              <label class="field-label" for="cfg-clock1-tz">Klok 1, IANA-tijdzone</label>
+              <input id="cfg-clock1-tz" class="field" type="text" placeholder="Asia/Bangkok" spellcheck="false" autocomplete="off">
+            </div>
+            <div>
+              <label class="field-label" for="cfg-clock2-label">Klok 2, naam</label>
+              <input id="cfg-clock2-label" class="field" type="text" autocomplete="off">
+            </div>
+            <div>
+              <label class="field-label" for="cfg-clock2-tz">Klok 2, IANA-tijdzone</label>
+              <input id="cfg-clock2-tz" class="field" type="text" placeholder="Europe/Amsterdam" spellcheck="false" autocomplete="off">
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-block">
+          <h3 class="caption"><i data-lucide="sun" aria-hidden="true"></i> Weerlocatie 1</h3>
+          <div class="sheet">
+            <div>
+              <label class="field-label" for="cfg-w1-name">Naam</label>
+              <input id="cfg-w1-name" class="field" type="text" autocomplete="off">
+            </div>
+            <div class="pair-fields">
+              <div>
+                <label class="field-label" for="cfg-w1-lat">Breedtegraad</label>
+                <input id="cfg-w1-lat" class="field" type="number" step="any" inputmode="decimal">
+              </div>
+              <div>
+                <label class="field-label" for="cfg-w1-lon">Lengtegraad</label>
+                <input id="cfg-w1-lon" class="field" type="number" step="any" inputmode="decimal">
+              </div>
+            </div>
+            <div>
+              <label class="field-label" for="cfg-w1-url">Radar-URL</label>
+              <input id="cfg-w1-url" class="field" type="url" spellcheck="false" autocomplete="off">
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-block">
+          <h3 class="caption"><i data-lucide="cloud-rain" aria-hidden="true"></i> Weerlocatie 2</h3>
+          <div class="sheet">
+            <div>
+              <label class="field-label" for="cfg-w2-name">Naam</label>
+              <input id="cfg-w2-name" class="field" type="text" autocomplete="off">
+            </div>
+            <div class="pair-fields">
+              <div>
+                <label class="field-label" for="cfg-w2-lat">Breedtegraad</label>
+                <input id="cfg-w2-lat" class="field" type="number" step="any" inputmode="decimal">
+              </div>
+              <div>
+                <label class="field-label" for="cfg-w2-lon">Lengtegraad</label>
+                <input id="cfg-w2-lon" class="field" type="number" step="any" inputmode="decimal">
+              </div>
+            </div>
+            <div>
+              <label class="field-label" for="cfg-w2-url">Radar-URL</label>
+              <input id="cfg-w2-url" class="field" type="url" spellcheck="false" autocomplete="off">
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-block">
+          <h3 class="caption"><i data-lucide="coins" aria-hidden="true"></i> Wisselkoers EUR/THB</h3>
+          <div class="sheet">
+            <label class="check-row" for="cfg-rate-auto"><span>Automatisch live ophalen</span>
+              <input id="cfg-rate-auto" type="checkbox">
+            </label>
+            <div id="cfg-manual-rate-container">
+              <label class="field-label" for="cfg-manual-rate">Vaste koers (THB per €1)</label>
+              <input id="cfg-manual-rate" class="field" type="number" step="any" min="0" inputmode="decimal">
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-block">
+          <h3 class="caption"><i data-lucide="eye" aria-hidden="true"></i> Zichtbaarheid Onderdelen</h3>
+          <div class="sheet">
+            <label class="check-row" for="vis-clock-1"><span>Klok 1</span><input id="vis-clock-1" type="checkbox"></label>
+            <label class="check-row" for="vis-clock-2"><span>Klok 2</span><input id="vis-clock-2" type="checkbox"></label>
+            <label class="check-row" for="vis-card-currency"><span>Wisselkoerskaart</span><input id="vis-card-currency" type="checkbox"></label>
+            <label class="check-row" for="vis-card-weather-1"><span>Weerkaart 1</span><input id="vis-card-weather-1" type="checkbox"></label>
+            <label class="check-row" for="vis-card-weather-2"><span>Weerkaart 2</span><input id="vis-card-weather-2" type="checkbox"></label>
+            <label class="check-row" for="vis-col-nl"><span>Kolom Algemeen Nieuws</span><input id="vis-col-nl" type="checkbox"></label>
+            <label class="check-row" for="vis-col-sport"><span>Kolom Sportnieuws</span><input id="vis-col-sport" type="checkbox"></label>
+            <p class="caption subhead">Rubrieken</p>
+            <div id="vis-categories"></div>
+          </div>
+        </section>
+
+      </form>
+      <div class="settings-foot">
+        <button id="btn-reset-defaults" type="button" class="btn btn-outlined">Standaard</button>
+        <div class="settings-actions">
+          <button id="btn-cancel-settings" type="button" class="btn btn-outlined">Annuleren</button>
+          <button id="btn-save-settings" type="submit" form="settings-form" class="btn btn-primary">Opslaan &amp; Sluiten</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <script>
+    'use strict';
+
+    var CONFIG_KEY = 'dashboard_config_v3';
+    var CACHE_KEY = 'dailydash_cache_v1';
+    var CACHE_TTL = 15 * 60 * 1000;
+
+    var DEFAULT_CONFIG = {
+      theme: 'dark',
+      threeColumnLayout: false,
+      showArticlePhotos: true,
+      articleTextSize: 'md',
+      clock1: { label: 'Chiang Rai', timezone: 'Asia/Bangkok' },
+      clock2: { label: 'Amsterdam', timezone: 'Europe/Amsterdam' },
+      weather1: {
+        name: 'Chiang Rai',
+        lat: 19.9105,
+        lon: 99.8406,
+        tz: 'Asia/Bangkok',
+        radarUrl: 'https://www.rainviewer.com/weather-radar-map-live/thailand/chiang-rai.html'
+      },
+      weather2: {
+        name: 'Noordwijk aan Zee',
+        lat: 52.2427,
+        lon: 4.4372,
+        tz: 'Europe/Amsterdam',
+        buienradarUrl: 'https://www.buienradar.nl/weer/noordwijk/nl/2749870'
+      },
+      rate: { autoFetch: true, manualRate: 38.0 },
+      visibility: {
+        clock1: true,
+        clock2: true,
+        cardCurrency: true,
+        cardWeather1: true,
+        cardWeather2: true,
+        colNlNews: true,
+        colSportNews: true,
+        categories: {
+          'nl-algemeen': true,
+          'nl-politiek': true,
+          'nl-wereld': true,
+          'nl-economie': true,
+          'sport-voetbal': true,
+          'sport-wielrennen': true,
+          'sport-schaatsen': true,
+          'sport-overig': true
+        }
+      }
+    };
+
+    var NL_CATEGORIES = [
+      { id: 'nl-algemeen', title: 'Algemeen', group: 'nl', feedUrl: 'https://feeds.nos.nl/nosnieuwsalgemeen' },
+      { id: 'nl-politiek', title: 'Politiek', group: 'nl', feedUrl: 'https://feeds.nos.nl/nosnieuwspolitiek' },
+      { id: 'nl-wereld', title: 'Wereld', group: 'nl', feedUrl: 'https://feeds.nos.nl/nosnieuwswereld' },
+      { id: 'nl-economie', title: 'Economie', group: 'nl', feedUrl: 'https://feeds.nos.nl/nosnieuwseconomie' }
+    ];
+
+    var SPORT_CATEGORIES = [
+      { id: 'sport-voetbal', title: 'Voetbal', group: 'sport', feedUrl: 'https://feeds.nos.nl/nossportvoetbal' },
+      { id: 'sport-wielrennen', title: 'Wielrennen', group: 'sport', feedUrl: 'https://feeds.nos.nl/nossportwielrennen' },
+      { id: 'sport-schaatsen', title: 'Schaatsen', group: 'sport', feedUrl: 'https://feeds.nos.nl/nossportschaatsen' },
+      { id: 'sport-overig', title: 'Sport algemeen', group: 'sport', feedUrl: 'https://feeds.nos.nl/nossportalgemeen' }
+    ];
+
+    var ALL_CATEGORIES = NL_CATEGORIES.concat(SPORT_CATEGORIES);
+
+    var state = {
+      config: null,
+      rate: null,
+      refreshing: false,
+      clockTimer: 0,
+      lastFocus: null,
+      news: {},
+      newsInflight: new Set(),
+      settingsOpen: false
+    };
+
+    function $(id) { return document.getElementById(id); }
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    /* —— config / storage —— */
+
+    function mergeConfig(base, saved) {
+      if (!base || typeof base !== 'object') return base;
+      var savedObj = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+      var out = {};
+      Object.keys(base).forEach(function (key) {
+        var baseValue = base[key];
+        if (baseValue && typeof baseValue === 'object') {
+          out[key] = mergeConfig(baseValue, savedObj[key]);
+          return;
+        }
+        if (Object.prototype.hasOwnProperty.call(savedObj, key) && savedObj[key] !== null && typeof savedObj[key] !== 'object') {
+          out[key] = savedObj[key];
+          return;
+        }
+        out[key] = baseValue;
+      });
+      return out;
+    }
+
+    function asFlag(value, fallback) {
+      return typeof value === 'boolean' ? value : fallback;
+    }
+
+    function normalizeConfig(config) {
+      if (config.theme !== 'light' && config.theme !== 'medium' && config.theme !== 'dark') config.theme = 'dark';
+      if (config.articleTextSize !== 'sm' && config.articleTextSize !== 'md' && config.articleTextSize !== 'lg') {
+        config.articleTextSize = 'md';
+      }
+      config.threeColumnLayout = asFlag(config.threeColumnLayout, false);
+      config.showArticlePhotos = asFlag(config.showArticlePhotos, true);
+      config.rate.autoFetch = asFlag(config.rate.autoFetch, true);
+      config.rate.manualRate = Number(config.rate.manualRate);
+      if (!Number.isFinite(config.rate.manualRate) || config.rate.manualRate <= 0) config.rate.manualRate = 38;
+      ['weather1', 'weather2'].forEach(function (key) {
+        config[key].lat = Number(config[key].lat);
+        config[key].lon = Number(config[key].lon);
+        config[key].name = String(config[key].name || DEFAULT_CONFIG[key].name);
+      });
+      var flags = ['clock1', 'clock2', 'cardCurrency', 'cardWeather1', 'cardWeather2', 'colNlNews', 'colSportNews'];
+      flags.forEach(function (key) {
+        config.visibility[key] = asFlag(config.visibility[key], true);
+      });
+      ALL_CATEGORIES.forEach(function (cat) {
+        config.visibility.categories[cat.id] = asFlag(config.visibility.categories[cat.id], true);
+      });
+      return config;
+    }
+
+    function loadConfig() {
+      var saved = null;
+      try { saved = JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null'); } catch (error) { saved = null; }
+      state.config = normalizeConfig(mergeConfig(DEFAULT_CONFIG, saved));
+    }
+
+    function saveConfig() {
+      try { localStorage.setItem(CONFIG_KEY, JSON.stringify(state.config)); } catch (error) {}
+    }
+
+    function readCache() {
+      try {
+        var parsed = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        if (!parsed || typeof parsed !== 'object') return { rate: null, weather: {}, news: {} };
+        return {
+          rate: parsed.rate || null,
+          weather: parsed.weather && typeof parsed.weather === 'object' ? parsed.weather : {},
+          news: parsed.news && typeof parsed.news === 'object' ? parsed.news : {}
+        };
+      } catch (error) {
+        return { rate: null, weather: {}, news: {} };
+      }
+    }
+
+    function writeCache(mutate) {
+      var cache = readCache();
+      mutate(cache);
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch (error) {}
+    }
+
+    function fresh(record) {
+      return !!(record && record.fetchedAt && (Date.now() - record.fetchedAt) < CACHE_TTL);
+    }
+
+    /* —— theme —— */
+
+    var THEME_ORDER = ['light', 'medium', 'dark'];
+    var THEME_META = {
+      light: { next: 'medium', icon: 'sun', pressed: 'false', label: 'Thema: licht. Wissel naar medium.', color: '#f6f5f4' },
+      medium: { next: 'dark', icon: 'sun-medium', pressed: 'mixed', label: 'Thema: medium. Wissel naar donker.', color: '#e7d9cc' },
+      dark: { next: 'light', icon: 'moon', pressed: 'true', label: 'Thema: donker. Wissel naar licht.', color: '#02093a' }
+    };
+
+    function applyTheme() {
+      var theme = state.config.theme;
+      var meta = THEME_META[theme];
+      document.documentElement.dataset.theme = theme;
+      var button = $('btn-theme');
+      button.setAttribute('aria-pressed', meta.pressed);
+      button.setAttribute('aria-label', meta.label);
+      button.title = meta.label;
+      setIcon('theme', meta.icon);
+      var color = document.querySelector('meta[name="theme-color"]');
+      if (color) color.setAttribute('content', meta.color);
+    }
+
+    function cycleTheme() {
+      var index = THEME_ORDER.indexOf(state.config.theme);
+      state.config.theme = THEME_ORDER[(index + 1) % THEME_ORDER.length];
+      saveConfig();
+      applyTheme();
+      paintIcons();
+    }
+
+    /* —— layout / text size —— */
+
+    var SIZE_ORDER = ['sm', 'md', 'lg'];
+    var SIZE_META = {
+      sm: { mark: 'S', name: 'Klein', next: 'Normaal' },
+      md: { mark: 'M', name: 'Normaal', next: 'groot' },
+      lg: { mark: 'L', name: 'Groot', next: 'klein' }
+    };
+
+    function applyLayout() {
+      var three = state.config.threeColumnLayout;
+      document.documentElement.dataset.layout = three ? '3' : '2';
+      var button = $('btn-toggle-layout');
+      var label = three
+        ? '3 kolommen. Wissel naar 2 kolommen.'
+        : '2 kolommen. Wissel naar 3 kolommen met widgets rechts.';
+      button.setAttribute('aria-pressed', three ? 'true' : 'false');
+      button.setAttribute('aria-label', label);
+      button.title = label;
+      setIcon('layout', three ? 'columns-3' : 'columns-2');
+    }
+
+    function toggleLayout() {
+      state.config.threeColumnLayout = !state.config.threeColumnLayout;
+      saveConfig();
+      applyLayout();
+      paintIcons();
+    }
+
+    function applyTextSize() {
+      var size = state.config.articleTextSize;
+      var meta = SIZE_META[size];
+      document.documentElement.dataset.textSize = size;
+      $('text-size-indicator').textContent = meta.mark;
+      var label = 'Tekstgrootte artikelen: ' + meta.name + '. Wissel naar ' + meta.next + '.';
+      var button = $('btn-text-size');
+      button.setAttribute('aria-label', label);
+      button.title = label;
+    }
+
+    function cycleTextSize() {
+      var index = SIZE_ORDER.indexOf(state.config.articleTextSize);
+      state.config.articleTextSize = SIZE_ORDER[(index + 1) % SIZE_ORDER.length];
+      saveConfig();
+      applyTextSize();
+    }
+
+    function applyVisibility() {
+      var vis = state.config.visibility;
+      $('clock-1-container').hidden = !vis.clock1;
+      $('clock-2-container').hidden = !vis.clock2;
+      $('card-currency').hidden = !vis.cardCurrency;
+      $('card-weather-1').hidden = !vis.cardWeather1;
+      $('card-weather-2').hidden = !vis.cardWeather2;
+      $('col-nl-news').hidden = !vis.colNlNews;
+      $('col-sport-news').hidden = !vis.colSportNews;
+      ALL_CATEGORIES.forEach(function (cat) {
+        var block = $('cat-block-' + cat.id);
+        if (block) block.hidden = !vis.categories[cat.id];
+      });
+      var widgets = vis.cardCurrency || vis.cardWeather1 || vis.cardWeather2;
+      var news = vis.colNlNews || vis.colSportNews;
+      document.documentElement.dataset.widgets = widgets ? 'some' : 'none';
+      document.documentElement.dataset.news = news ? 'some' : 'none';
+      $('widgets-container').hidden = !widgets;
+      updateNewsCounts();
+    }
+
+    /* —— clocks —— */
+
+    function formatZone(timeZone, date) {
+      return new Intl.DateTimeFormat('nl-NL', {
+        timeZone: timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23'
+      }).format(date);
+    }
+
+    function zoneDateTime(timeZone, date) {
+      try {
+        var parts = new Intl.DateTimeFormat('en-GB', {
+          timeZone: timeZone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hourCycle: 'h23'
+        }).formatToParts(date);
+        var bag = {};
+        parts.forEach(function (part) { bag[part.type] = part.value; });
+        return bag.year + '-' + bag.month + '-' + bag.day + 'T' + bag.hour + ':' + bag.minute + ':' + bag.second;
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function paintClock(labelId, timeId, clock) {
+      $(labelId).textContent = clock.label || 'Klok';
+      var node = $(timeId);
+      try {
+        var now = new Date();
+        node.textContent = formatZone(clock.timezone, now);
+        node.dateTime = zoneDateTime(clock.timezone, now);
+      } catch (error) {
+        node.textContent = 'Tijdzone ongeldig';
+        node.dateTime = '';
+      }
+    }
+
+    function updateClocks() {
+      var now = new Date();
+      $('current-date').textContent = new Intl.DateTimeFormat('nl-NL', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }).format(now);
+      paintClock('label-clock-1', 'clock-1-val', state.config.clock1);
+      paintClock('label-clock-2', 'clock-2-val', state.config.clock2);
+    }
+
+    function scheduleClocks() {
+      updateClocks();
+      var delay = 1000 - (Date.now() % 1000);
+      state.clockTimer = window.setTimeout(scheduleClocks, delay);
+    }
+
+    /* —— shared formatting —— */
+
+    function formatNumber(value, digits) {
+      return Number(value).toLocaleString('nl-NL', {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      });
+    }
+
+    function updatedLabel(value) {
+      if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        var parts = value.split('-').map(Number);
+        value = new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+      var date = value instanceof Date ? value : new Date(value);
+      if (Number.isNaN(date.getTime())) return 'laatst bijgewerkt';
+      var text = new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+      return 'laatst bijgewerkt ' + text;
+    }
+
+    function safeUrl(value) {
+      try {
+        var url = new URL(String(value), window.location.href);
+        if (url.protocol === 'http:' || url.protocol === 'https:') return url.href;
+      } catch (error) {}
+      return '#';
+    }
+
+    function plainText(value) {
+      return String(value || '')
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;|&apos;/gi, "'")
+        .replace(/&#(\d+);/g, function (_, code) { return String.fromCharCode(Number(code)); })
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function setIcon(slotName, iconName) {
+      var slot = document.querySelector('[data-slot="' + slotName + '"]');
+      if (!slot || slot.dataset.icon === iconName) return;
+      slot.dataset.icon = iconName;
+      var icon = document.createElement('i');
+      icon.setAttribute('data-lucide', iconName);
+      icon.setAttribute('aria-hidden', 'true');
+      slot.replaceChildren(icon);
+    }
+
+    function paintIcons() {
+      if (!window.lucide || typeof lucide.createIcons !== 'function' || !lucide.icons) return;
+      try { lucide.createIcons({ icons: lucide.icons }); } catch (error) {}
+    }
+
+    function setStatus(text) {
+      $('status-live').textContent = text;
+    }
+
+    async function fetchJson(url, force) {
+      var options = { cache: force ? 'no-store' : 'default' };
+      if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+        options.signal = AbortSignal.timeout(15000);
+      }
+      var response = await fetch(url, options);
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return response.json();
+    }
+
+    /* —— rates —— */
+
+    function renderRate() {
+      var rate = state.rate || { value: null, source: 'error', label: 'Laden…' };
+      var badge = $('rate-badge');
+      badge.className = 'badge';
+      if (rate.source === 'manual') {
+        badge.textContent = 'Handmatig';
+        badge.classList.add('badge-manual');
+      } else if (rate.source === 'cache') {
+        badge.textContent = 'Cache';
+        badge.classList.add('badge-cache');
+      } else if (rate.source === 'error') {
+        badge.textContent = 'Geen data';
+        badge.classList.add('badge-cache');
+      } else {
+        badge.textContent = 'Live';
+      }
+      $('eur-thb-rate').textContent = Number.isFinite(rate.value) ? formatNumber(rate.value, 2) : '–';
+      $('rate-updated').textContent = rate.label || '';
+      calculateCurrency();
+    }
+
+    function calculateCurrency() {
+      var value = state.rate && Number.isFinite(state.rate.value) ? state.rate.value : 0;
+      var euros = Number($('calc-eur-input').value);
+      var baht = Number($('calc-thb-input').value);
+      if (!Number.isFinite(euros) || euros < 0) euros = 0;
+      if (!Number.isFinite(baht) || baht < 0) baht = 0;
+      $('calc-thb-output').textContent = formatNumber(euros * value, 2);
+      $('calc-eur-output').textContent = formatNumber(value > 0 ? baht / value : 0, 2);
+    }
+
+    async function fetchRate(force) {
+      if (!state.config.rate.autoFetch) {
+        state.rate = {
+          value: Number(state.config.rate.manualRate) || 38,
+          source: 'manual',
+          label: 'Vaste koers'
+        };
+        renderRate();
+        return;
+      }
+      var cached = readCache().rate;
+      if (!force && fresh(cached) && Number.isFinite(cached.value)) {
+        state.rate = { value: cached.value, source: 'cache', label: updatedLabel(cached.date || cached.fetchedAt) };
+        renderRate();
+        return;
+      }
+      try {
+        var value;
+        var date;
+        var source;
+        try {
+          var frankfurter = await fetchJson('https://api.frankfurter.app/latest?from=EUR&to=THB', force);
+          if (!frankfurter.rates || !Number.isFinite(Number(frankfurter.rates.THB))) throw new Error('frankfurter');
+          value = Number(frankfurter.rates.THB);
+          date = frankfurter.date;
+          source = 'frankfurter';
+        } catch (error) {
+          var backup = await fetchJson('https://open.er-api.com/v6/latest/EUR', force);
+          if (!backup.rates || !Number.isFinite(Number(backup.rates.THB))) throw new Error('er-api');
+          value = Number(backup.rates.THB);
+          date = backup.time_last_update_utc || new Date().toISOString();
+          source = 'er-api';
+        }
+        state.rate = { value: value, source: source, label: updatedLabel(date) };
+        writeCache(function (cache) {
+          cache.rate = { value: value, date: date, source: source, fetchedAt: Date.now() };
+        });
+      } catch (error) {
+        if (cached && Number.isFinite(cached.value)) {
+          state.rate = { value: cached.value, source: 'cache', label: updatedLabel(cached.date || cached.fetchedAt) };
+        } else {
+          state.rate = { value: null, source: 'error', label: 'Koers nu niet beschikbaar' };
+        }
+      }
+      renderRate();
+    }
+
+    /* —— weather —— */
+
+    function weatherCondition(code) {
+      if (code === 0) return { text: 'Helder', icon: 'sun' };
+      if (code === 1 || code === 2) return { text: 'Licht bewolkt', icon: 'cloud-sun' };
+      if (code === 3) return { text: 'Bewolkt', icon: 'cloud' };
+      if (code === 45 || code === 48) return { text: 'Mist', icon: 'cloud-fog' };
+      if (code >= 51 && code <= 57) return { text: 'Motregen', icon: 'cloud-drizzle' };
+      if (code >= 61 && code <= 67) return { text: 'Regen', icon: 'cloud-rain' };
+      if (code >= 71 && code <= 77) return { text: 'Sneeuw', icon: 'snowflake' };
+      if (code >= 80 && code <= 82) return { text: 'Buien', icon: 'cloud-rain' };
+      if (code >= 85 && code <= 86) return { text: 'Sneeuwbuien', icon: 'cloud-snow' };
+      if (code >= 95) return { text: 'Onweer', icon: 'cloud-lightning' };
+      return { text: 'Bewolkt', icon: 'cloud' };
+    }
+
+    function weekdayShort(isoDate) {
+      var parts = String(isoDate).split('-').map(Number);
+      if (parts.length < 3 || parts.some(function (part) { return !Number.isFinite(part); })) return isoDate;
+      return new Intl.DateTimeFormat('nl-NL', { weekday: 'short' }).format(new Date(parts[0], parts[1] - 1, parts[2]));
+    }
+
+    function rainNow(data) {
+      var hourly = data.hourly || {};
+      var times = hourly.time || [];
+      var probs = hourly.precipitation_probability || [];
+      var stamp = data.current && data.current.time ? String(data.current.time).slice(0, 13) : '';
+      var index = times.findIndex(function (time) { return String(time).slice(0, 13) === stamp; });
+      if (index >= 0 && probs[index] != null && Number.isFinite(Number(probs[index]))) return Number(probs[index]);
+      var daily = data.daily && data.daily.precipitation_probability_max;
+      if (daily && daily[0] != null && Number.isFinite(Number(daily[0]))) return Number(daily[0]);
+      return null;
+    }
+
+    function parseWeather(data) {
+      var current = data.current || {};
+      var daily = data.daily || {};
+      var days = [];
+      for (var i = 1; i <= 3; i += 1) {
+        if (!daily.time || !daily.time[i]) break;
+        days.push({
+          label: weekdayShort(daily.time[i]),
+          max: Math.round(Number(daily.temperature_2m_max[i])),
+          min: Math.round(Number(daily.temperature_2m_min[i])),
+          rain: daily.precipitation_probability_max && daily.precipitation_probability_max[i] != null
+            ? Math.round(Number(daily.precipitation_probability_max[i]))
+            : null
+        });
+      }
+      return {
+        temp: Math.round(Number(current.temperature_2m)),
+        code: Number(current.weather_code),
+        wind: Math.round(Number(current.wind_speed_10m)),
+        rain: rainNow(data) == null ? null : Math.round(rainNow(data)),
+        min: daily.temperature_2m_min ? Math.round(Number(daily.temperature_2m_min[0])) : null,
+        max: daily.temperature_2m_max ? Math.round(Number(daily.temperature_2m_max[0])) : null,
+        days: days,
+        fetchedAt: Date.now()
+      };
+    }
+
+    function weatherKey(loc) {
+      return Number(loc.lat).toFixed(3) + ',' + Number(loc.lon).toFixed(3);
+    }
+
+    function defaultRadar(slot) {
+      var loc = DEFAULT_CONFIG[slot];
+      return loc.radarUrl || loc.buienradarUrl;
+    }
+
+    function storedRadar(loc) {
+      return String(loc.radarUrl || loc.buienradarUrl || '').trim();
+    }
+
+    function radarHref(loc, slot) {
+      var custom = storedRadar(loc);
+      var defaults = DEFAULT_CONFIG[slot];
+      var moved = Number(loc.lat) !== Number(defaults.lat) || Number(loc.lon) !== Number(defaults.lon);
+      var stillDefault = custom === defaultRadar(slot);
+      if (custom && safeUrl(custom) !== '#' && !(stillDefault && moved)) return safeUrl(custom);
+      return safeUrl('https://www.rainviewer.com/map.html?loc=' + loc.lat + ',' + loc.lon + ',8');
+    }
+
+    function radarLabel(href) {
+      try {
+        var host = new URL(href).hostname;
+        if (host.indexOf('buienradar') !== -1) return 'Buienradar';
+      } catch (error) {}
+      return 'Radar';
+    }
+
+    function renderForecast(host, days) {
+      host.replaceChildren();
+      (days || []).forEach(function (day) {
+        var cell = document.createElement('div');
+        cell.className = 'day';
+        var name = document.createElement('span');
+        name.textContent = day.label;
+        var max = document.createElement('strong');
+        max.textContent = Number.isFinite(day.max) ? day.max + '°' : '–';
+        var min = document.createElement('small');
+        var minText = Number.isFinite(day.min) ? day.min + '°' : '–';
+        if (day.rain != null && Number.isFinite(day.rain)) minText += ' · ' + day.rain + '%';
+        min.textContent = minText;
+        cell.append(name, max, min);
+        host.append(cell);
+      });
+    }
+
+    function renderWeather(slot, record) {
+      var prefix = slot === 'weather1' ? 'w1' : 'w2';
+      var loc = state.config[slot];
+      $(prefix + '-title').textContent = loc.name;
+      var link = $(prefix + '-radar-link');
+      var href = radarHref(loc, slot);
+      link.href = href;
+      link.textContent = radarLabel(href);
+      var icon = document.createElement('i');
+      icon.setAttribute('data-lucide', 'arrow-up-right');
+      icon.setAttribute('aria-hidden', 'true');
+      link.append(icon);
+      if (!record || record.status === 'error') {
+        $(prefix + '-condition').textContent = 'Niet beschikbaar';
+        $(prefix + '-temp').textContent = '–';
+        $(prefix + '-subtext').textContent = 'Min – / max –';
+        $(prefix + '-wind').textContent = '– km/h';
+        $(prefix + '-rain').textContent = '–%';
+        $(prefix + '-forecast').replaceChildren();
+        $(prefix + '-updated').textContent = 'Weer nu niet beschikbaar';
+        setIcon(prefix, 'cloud');
+        return;
+      }
+      var view = record.data;
+      var condition = weatherCondition(view.code);
+      $(prefix + '-condition').textContent = condition.text;
+      $(prefix + '-temp').textContent = Number.isFinite(view.temp) ? String(view.temp) : '–';
+      var min = Number.isFinite(view.min) ? view.min + '°' : '–';
+      var max = Number.isFinite(view.max) ? view.max + '°' : '–';
+      $(prefix + '-subtext').textContent = 'Min ' + min + ' / max ' + max;
+      $(prefix + '-wind').textContent = (Number.isFinite(view.wind) ? view.wind : '–') + ' km/h';
+      $(prefix + '-rain').textContent = (view.rain == null ? '–' : view.rain) + '%';
+      $(prefix + '-updated').textContent = updatedLabel(view.fetchedAt);
+      renderForecast($(prefix + '-forecast'), view.days);
+      setIcon(prefix, condition.icon);
+    }
+
+    async function fetchWeather(slot, force) {
+      var loc = state.config[slot];
+      var key = weatherKey(loc);
+      var cache = readCache().weather[key];
+      if (!force && fresh(cache) && cache.data) {
+        renderWeather(slot, { status: 'ok', data: cache.data });
+        return;
+      }
+      var url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
+        latitude: String(loc.lat),
+        longitude: String(loc.lon),
+        current: 'temperature_2m,weather_code,wind_speed_10m',
+        hourly: 'precipitation_probability',
+        daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
+        forecast_days: '4',
+        timezone: 'auto',
+        wind_speed_unit: 'kmh'
+      }).toString();
+      try {
+        var data = await fetchJson(url, force);
+        if (!data.current || !Number.isFinite(Number(data.current.temperature_2m))) throw new Error('weer');
+        var parsed = parseWeather(data);
+        writeCache(function (box) { box.weather[key] = { data: parsed, fetchedAt: parsed.fetchedAt }; });
+        renderWeather(slot, { status: 'ok', data: parsed });
+      } catch (error) {
+        if (cache && cache.data) renderWeather(slot, { status: 'ok', data: cache.data });
+        else renderWeather(slot, { status: 'error' });
+      }
+    }
+
+    async function fetchAllWeather(force) {
+      var jobs = [];
+      if (state.config.visibility.cardWeather1) jobs.push(fetchWeather('weather1', force));
+      if (state.config.visibility.cardWeather2) jobs.push(fetchWeather('weather2', force));
+      await Promise.all(jobs);
+      paintIcons();
+    }
+
+    /* —— news —— */
+
+    function articleCount(count) {
+      return count === 1 ? '1 artikel' : count + ' artikelen';
+    }
+
+    function sourceName(link) {
+      try {
+        var host = new URL(link).hostname.toLowerCase();
+        if (host.indexOf('nos.nl') !== -1) return 'NOS';
+        if (host.indexOf('nu.nl') !== -1) return 'NU.nl';
+      } catch (error) {}
+      return 'NOS';
+    }
+
+    function formatTimeAgo(pubDate) {
+      var date = new Date(String(pubDate || '').trim().replace(' ', 'T'));
+      if (Number.isNaN(date.getTime())) return 'Zojuist';
+      var minutes = Math.floor((Date.now() - date.getTime()) / 60000);
+      if (minutes < 1) return 'Zojuist';
+      if (minutes < 60) return minutes + ' min geleden';
+      var hours = Math.floor(minutes / 60);
+      if (hours < 24) return hours + ' u geleden';
+      return Math.floor(hours / 24) + ' d geleden';
+    }
+
+    function itemImage(item) {
+      var candidates = [];
+      if (item.enclosure && item.enclosure.link) candidates.push(item.enclosure.link);
+      if (item.thumbnail) candidates.push(item.thumbnail);
+      var match = String(item.description || '').match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (match) candidates.push(match[1]);
+      for (var i = 0; i < candidates.length; i += 1) {
+        var safe = safeUrl(candidates[i]);
+        if (safe !== '#') return safe;
+      }
+      return '';
+    }
+
+    function slimItem(item) {
+      var image = itemImage(item);
+      return {
+        title: String(item.title || ''),
+        link: String(item.link || ''),
+        description: plainText(item.description || '').slice(0, 220),
+        pubDate: String(item.pubDate || ''),
+        thumbnail: image
+      };
+    }
+
+    function columnVisible(cat) {
+      return cat.group === 'nl' ? state.config.visibility.colNlNews : state.config.visibility.colSportNews;
+    }
+
+    function buildNewsShells() {
+      [['nl', NL_CATEGORIES, $('nl-categories-container')], ['sport', SPORT_CATEGORIES, $('sport-categories-container')]].forEach(function (entry) {
+        var host = entry[2];
+        entry[1].forEach(function (cat) {
+          var block = document.createElement('section');
+          block.id = 'cat-block-' + cat.id;
+          block.className = 'cat-block';
+          var head = document.createElement('div');
+          head.className = 'cat-head';
+          var title = document.createElement('h3');
+          title.className = 'caption';
+          title.textContent = cat.title;
+          var count = document.createElement('span');
+          count.className = 'muted';
+          count.dataset.countFor = cat.id;
+          head.append(title, count);
+          var body = document.createElement('div');
+          body.dataset.bodyFor = cat.id;
+          block.append(head, body);
+          host.append(block);
+        });
+      });
+    }
+
+    function renderCategory(cat) {
+      var body = document.querySelector('[data-body-for="' + cat.id + '"]');
+      var count = document.querySelector('[data-count-for="' + cat.id + '"]');
+      if (!body || !count) return;
+      var record = state.news[cat.id];
+      body.replaceChildren();
+      if (!record || record.status === 'loading') {
+        count.textContent = 'Laden…';
+        var loading = document.createElement('p');
+        loading.className = 'loading-note';
+        loading.textContent = 'Laden…';
+        body.append(loading);
+        return;
+      }
+      if (record.status === 'error') {
+        count.textContent = 'mislukt';
+        var error = document.createElement('div');
+        error.className = 'fetch-error';
+        var message = document.createElement('p');
+        message.textContent = 'Deze rubriek lukt nu niet te laden.';
+        var retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'btn btn-outlined';
+        retry.dataset.retry = cat.id;
+        retry.textContent = 'Opnieuw proberen';
+        error.append(message, retry);
+        body.append(error);
+        return;
+      }
+      var items = record.items || [];
+      count.textContent = articleCount(items.length);
+      var leadIndex = -1;
+      if (state.config.showArticlePhotos) {
+        leadIndex = items.findIndex(function (item) { return item.thumbnail; });
+      }
+      items.forEach(function (item, index) {
+        body.append(renderArticle(item, index === leadIndex));
+      });
+    }
+
+    function renderArticle(item, lead) {
+      var link = document.createElement('a');
+      link.className = 'article';
+      var href = safeUrl(item.link);
+      link.href = href === '#' ? 'https://nos.nl' : href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      if (lead && item.thumbnail) {
+        var photo = document.createElement('div');
+        photo.className = 'article-photo';
+        var image = document.createElement('img');
+        image.alt = '';
+        image.referrerPolicy = 'no-referrer';
+        image.src = item.thumbnail;
+        image.addEventListener('error', function () { photo.remove(); });
+        photo.append(image);
+        link.append(photo);
+      }
+      var meta = document.createElement('p');
+      meta.className = 'article-meta';
+      meta.textContent = formatTimeAgo(item.pubDate) + ' · ' + sourceName(item.link);
+      var title = document.createElement('h4');
+      title.className = 'article-title';
+      title.textContent = item.title ? item.title : 'Zonder titel';
+      link.append(meta, title);
+      if (item.description) {
+        var summary = document.createElement('p');
+        summary.className = 'article-desc';
+        summary.textContent = item.description;
+        link.append(summary);
+      }
+      return link;
+    }
+
+    function updateNewsCounts() {
+      [['nl', NL_CATEGORIES, $('nl-count')], ['sport', SPORT_CATEGORIES, $('sport-count')]].forEach(function (entry) {
+        var visible = entry[1].filter(function (cat) { return state.config.visibility.categories[cat.id]; });
+        var pending = visible.some(function (cat) { return !state.news[cat.id] || state.news[cat.id].status === 'loading'; });
+        var total = visible.reduce(function (sum, cat) {
+          var record = state.news[cat.id];
+          return sum + (record && record.status === 'ok' ? record.items.length : 0);
+        }, 0);
+        entry[2].textContent = pending ? 'Laden…' : articleCount(total);
+      });
+    }
+
+    async function loadCategory(cat, force) {
+      if (state.newsInflight.has(cat.id)) return;
+      var cached = readCache().news[cat.id];
+      if (!force && fresh(cached) && cached.items) {
+        state.news[cat.id] = { status: 'ok', items: cached.items, fetchedAt: cached.fetchedAt };
+        renderCategory(cat);
+        return;
+      }
+      state.newsInflight.add(cat.id);
+      if (!(cached && cached.items && cached.items.length)) {
+        state.news[cat.id] = { status: 'loading', items: [] };
+        renderCategory(cat);
+      }
+      try {
+        var data = await fetchJson('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(cat.feedUrl), force);
+        if (data.status && data.status !== 'ok') throw new Error(data.message || 'rss');
+        var items = Array.isArray(data.items) ? data.items.slice(0, 5).map(slimItem) : [];
+        if (!items.length) throw new Error('leeg');
+        var fetchedAt = Date.now();
+        state.news[cat.id] = { status: 'ok', items: items, fetchedAt: fetchedAt };
+        writeCache(function (cache) { cache.news[cat.id] = { items: items, fetchedAt: fetchedAt }; });
+      } catch (error) {
+        if (cached && cached.items && cached.items.length) {
+          state.news[cat.id] = { status: 'ok', items: cached.items, fetchedAt: cached.fetchedAt };
+        } else {
+          state.news[cat.id] = { status: 'error', items: [] };
+        }
+      } finally {
+        state.newsInflight.delete(cat.id);
+        renderCategory(cat);
+      }
+    }
+
+    async function fetchAllNews(force) {
+      for (var i = 0; i < ALL_CATEGORIES.length; i += 1) {
+        var cat = ALL_CATEGORIES[i];
+        if (!state.config.visibility.categories[cat.id] || !columnVisible(cat)) continue;
+        await loadCategory(cat, force);
+      }
+      updateNewsCounts();
+    }
+
+    async function retryCategory(id) {
+      var cat = ALL_CATEGORIES.find(function (item) { return item.id === id; });
+      if (!cat || state.newsInflight.has(id)) return;
+      await loadCategory(cat, true);
+      updateNewsCounts();
+    }
+
+    /* —— settings modal —— */
+
+    function setManualRateState(auto) {
+      $('cfg-manual-rate-container').classList.toggle('is-dimmed', auto);
+      $('cfg-manual-rate').disabled = auto;
+    }
+
+    function fillSettingsForm() {
+      var config = state.config;
+      $('cfg-layout-3col').checked = config.threeColumnLayout;
+      $('cfg-show-photos').checked = config.showArticlePhotos;
+      $('cfg-text-size').value = config.articleTextSize;
+      $('cfg-clock1-label').value = config.clock1.label;
+      $('cfg-clock1-tz').value = config.clock1.timezone;
+      $('cfg-clock2-label').value = config.clock2.label;
+      $('cfg-clock2-tz').value = config.clock2.timezone;
+      $('cfg-w1-name').value = config.weather1.name;
+      $('cfg-w1-lat').value = config.weather1.lat;
+      $('cfg-w1-lon').value = config.weather1.lon;
+      $('cfg-w1-url').value = config.weather1.radarUrl || '';
+      $('cfg-w2-name').value = config.weather2.name;
+      $('cfg-w2-lat').value = config.weather2.lat;
+      $('cfg-w2-lon').value = config.weather2.lon;
+      $('cfg-w2-url').value = config.weather2.buienradarUrl || '';
+      $('cfg-rate-auto').checked = config.rate.autoFetch;
+      $('cfg-manual-rate').value = config.rate.manualRate;
+      $('vis-clock-1').checked = config.visibility.clock1;
+      $('vis-clock-2').checked = config.visibility.clock2;
+      $('vis-card-currency').checked = config.visibility.cardCurrency;
+      $('vis-card-weather-1').checked = config.visibility.cardWeather1;
+      $('vis-card-weather-2').checked = config.visibility.cardWeather2;
+      $('vis-col-nl').checked = config.visibility.colNlNews;
+      $('vis-col-sport').checked = config.visibility.colSportNews;
+      ALL_CATEGORIES.forEach(function (cat) {
+        var input = $('vis-cat-' + cat.id);
+        if (input) input.checked = config.visibility.categories[cat.id] !== false;
+      });
+      setManualRateState(config.rate.autoFetch);
+      $('settings-error').textContent = '';
+    }
+
+    function buildCategoryToggles() {
+      var host = $('vis-categories');
+      ALL_CATEGORIES.forEach(function (cat) {
+        var label = document.createElement('label');
+        label.className = 'check-row';
+        label.htmlFor = 'vis-cat-' + cat.id;
+        var span = document.createElement('span');
+        span.textContent = cat.title;
+        var input = document.createElement('input');
+        input.type = 'checkbox';
+        input.id = 'vis-cat-' + cat.id;
+        label.append(span, input);
+        host.append(label);
+      });
+    }
+
+    function focusableInDialog() {
+      return Array.prototype.filter.call(
+        $('settings-dialog').querySelectorAll('button, [href], input, select, textarea'),
+        function (el) { return !el.disabled && !el.closest('[hidden]'); }
+      );
+    }
+
+    function openSettings() {
+      fillSettingsForm();
+      state.lastFocus = document.activeElement;
+      state.settingsOpen = true;
+      $('settings-root').hidden = false;
+      $('settings-form').scrollTop = 0;
+      $('app').inert = true;
+      $('btn-open-settings').setAttribute('aria-expanded', 'true');
+      $('btn-close-settings').focus();
+    }
+
+    function closeSettings() {
+      if (!state.settingsOpen) return;
+      state.settingsOpen = false;
+      $('settings-root').hidden = true;
+      $('app').inert = false;
+      $('btn-open-settings').setAttribute('aria-expanded', 'false');
+      if (state.lastFocus && typeof state.lastFocus.focus === 'function') state.lastFocus.focus();
+    }
+
+    function parseCoord(value, min, max) {
+      var number = Number(value);
+      if (!Number.isFinite(number) || number < min || number > max) return null;
+      return number;
+    }
+
+    function optionalUrl(value) {
+      var text = String(value || '').trim();
+      if (!text) return '';
+      var safe = safeUrl(text);
+      return safe === '#' ? null : safe;
+    }
+
+    function showSettingsError(message, field) {
+      $('settings-error').textContent = message;
+      if (field) field.focus();
+    }
+
+    function readSettingsForm() {
+      var lat1 = parseCoord($('cfg-w1-lat').value, -90, 90);
+      var lon1 = parseCoord($('cfg-w1-lon').value, -180, 180);
+      var lat2 = parseCoord($('cfg-w2-lat').value, -90, 90);
+      var lon2 = parseCoord($('cfg-w2-lon').value, -180, 180);
+      if (lat1 == null || lon1 == null) {
+        showSettingsError('Locatie 1 heeft een geldige breedte- en lengtegraad nodig.', $('cfg-w1-lat'));
+        return null;
+      }
+      if (lat2 == null || lon2 == null) {
+        showSettingsError('Locatie 2 heeft een geldige breedte- en lengtegraad nodig.', $('cfg-w2-lat'));
+        return null;
+      }
+      var url1 = optionalUrl($('cfg-w1-url').value);
+      var url2 = optionalUrl($('cfg-w2-url').value);
+      if (url1 == null) {
+        showSettingsError('De radar-URL van locatie 1 moet met http of https beginnen.', $('cfg-w1-url'));
+        return null;
+      }
+      if (url2 == null) {
+        showSettingsError('De radar-URL van locatie 2 moet met http of https beginnen.', $('cfg-w2-url'));
+        return null;
+      }
+      var auto = $('cfg-rate-auto').checked;
+      var manual = Number($('cfg-manual-rate').value);
+      if (!auto && (!Number.isFinite(manual) || manual <= 0)) {
+        showSettingsError('Vul een koers groter dan 0 in, of zet live ophalen aan.', $('cfg-manual-rate'));
+        return null;
+      }
+      var next = clone(state.config);
+      next.threeColumnLayout = $('cfg-layout-3col').checked;
+      next.showArticlePhotos = $('cfg-show-photos').checked;
+      next.articleTextSize = $('cfg-text-size').value;
+      next.clock1.label = $('cfg-clock1-label').value.trim() || 'Klok 1';
+      next.clock1.timezone = $('cfg-clock1-tz').value.trim() || 'UTC';
+      next.clock2.label = $('cfg-clock2-label').value.trim() || 'Klok 2';
+      next.clock2.timezone = $('cfg-clock2-tz').value.trim() || 'UTC';
+      next.weather1.name = $('cfg-w1-name').value.trim() || 'Locatie 1';
+      next.weather1.lat = lat1;
+      next.weather1.lon = lon1;
+      next.weather1.radarUrl = url1;
+      next.weather2.name = $('cfg-w2-name').value.trim() || 'Locatie 2';
+      next.weather2.lat = lat2;
+      next.weather2.lon = lon2;
+      next.weather2.buienradarUrl = url2;
+      next.rate.autoFetch = auto;
+      next.rate.manualRate = Number.isFinite(manual) && manual > 0 ? manual : next.rate.manualRate;
+      next.visibility.clock1 = $('vis-clock-1').checked;
+      next.visibility.clock2 = $('vis-clock-2').checked;
+      next.visibility.cardCurrency = $('vis-card-currency').checked;
+      next.visibility.cardWeather1 = $('vis-card-weather-1').checked;
+      next.visibility.cardWeather2 = $('vis-card-weather-2').checked;
+      next.visibility.colNlNews = $('vis-col-nl').checked;
+      next.visibility.colSportNews = $('vis-col-sport').checked;
+      ALL_CATEGORIES.forEach(function (cat) {
+        var input = $('vis-cat-' + cat.id);
+        next.visibility.categories[cat.id] = input ? input.checked : true;
+      });
+      return next;
+    }
+
+    function applyPresentation() {
+      applyTheme();
+      applyLayout();
+      applyTextSize();
+      applyVisibility();
+      updateClocks();
+      ALL_CATEGORIES.forEach(renderCategory);
+      updateNewsCounts();
+      paintIcons();
+    }
+
+    async function saveSettings(event) {
+      event.preventDefault();
+      var next = readSettingsForm();
+      if (!next) return;
+      state.config = next;
+      saveConfig();
+      closeSettings();
+      applyPresentation();
+      await refreshAll(true, false);
+    }
+
+    function resetDefaults() {
+      var ok = window.confirm('Standaardinstellingen terugzetten? Je huidige keuzes worden overschreven.');
+      if (!ok) return;
+      state.config = normalizeConfig(clone(DEFAULT_CONFIG));
+      saveConfig();
+      applyPresentation();
+      fillSettingsForm();
+      refreshAll(true, false).catch(function () {});
+    }
+
+    function onDocumentKeydown(event) {
+      if (!state.settingsOpen) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeSettings();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      var nodes = focusableInDialog();
+      if (!nodes.length) return;
+      var first = nodes[0];
+      var last = nodes[nodes.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    /* —— refresh —— */
+
+    function setRefreshBusy(busy) {
+      var button = $('btn-refresh');
+      button.disabled = busy;
+      button.classList.toggle('is-busy', busy);
+      button.setAttribute('aria-busy', busy ? 'true' : 'false');
+    }
+
+    async function refreshAll(forceRates, forceNews) {
+      if (state.refreshing) {
+        var prev = state.queued || { forceRates: false, forceNews: false };
+        state.queued = {
+          forceRates: prev.forceRates || forceRates,
+          forceNews: prev.forceNews || forceNews
+        };
+        return;
+      }
+      state.refreshing = true;
+      setRefreshBusy(true);
+      try {
+        await Promise.all([
+          fetchRate(forceRates),
+          fetchAllWeather(forceRates),
+          fetchAllNews(forceNews)
+        ]);
+        var stamp = new Intl.DateTimeFormat('nl-NL', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hourCycle: 'h23'
+        }).format(new Date());
+        $('last-updated-time').textContent = stamp;
+        $('last-updated-time').dateTime = new Date().toISOString();
+        setStatus('Gegevens bijgewerkt');
+      } finally {
+        state.refreshing = false;
+        setRefreshBusy(false);
+        paintIcons();
+        if (state.queued) {
+          var next = state.queued;
+          state.queued = null;
+          await refreshAll(next.forceRates, next.forceNews);
+        }
+      }
+    }
+
+    function bindEvents() {
+      $('calc-eur-input').addEventListener('input', calculateCurrency);
+      $('calc-thb-input').addEventListener('input', calculateCurrency);
+      $('btn-refresh').addEventListener('click', function () { refreshAll(true, true).catch(function () {}); });
+      $('btn-theme').addEventListener('click', cycleTheme);
+      $('btn-toggle-layout').addEventListener('click', toggleLayout);
+      $('btn-text-size').addEventListener('click', cycleTextSize);
+      $('btn-open-settings').addEventListener('click', openSettings);
+      $('btn-close-settings').addEventListener('click', closeSettings);
+      $('btn-cancel-settings').addEventListener('click', closeSettings);
+      $('settings-backdrop').addEventListener('click', closeSettings);
+      $('settings-form').addEventListener('submit', function (event) { saveSettings(event).catch(function () {}); });
+      $('btn-reset-defaults').addEventListener('click', resetDefaults);
+      $('cfg-rate-auto').addEventListener('change', function (event) { setManualRateState(event.target.checked); });
+      $('news-grid').addEventListener('click', function (event) {
+        var target = event.target && event.target.nodeType === 1 ? event.target : event.target && event.target.parentElement;
+        var button = target && target.closest ? target.closest('[data-retry]') : null;
+        if (!button) return;
+        retryCategory(button.dataset.retry).catch(function () {});
+      });
+      document.addEventListener('keydown', onDocumentKeydown);
+    }
+
+    function initStaticIcons() {
+      setIcon('refresh', 'refresh-cw');
+      setIcon('theme', 'moon');
+      setIcon('layout', 'columns-2');
+      setIcon('text', 'type');
+      setIcon('settings', 'settings');
+      setIcon('w1', 'sun');
+      setIcon('w2', 'cloud-rain');
+    }
+
+    function init() {
+      loadConfig();
+      buildCategoryToggles();
+      buildNewsShells();
+      initStaticIcons();
+      bindEvents();
+      applyPresentation();
+      scheduleClocks();
+      refreshAll(false, false).catch(function () {});
+    }
+
+    init();
+  </script>
+</body>
+</html>
