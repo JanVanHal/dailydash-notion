@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#02093a">
+  <meta name="theme-color" content="#191919">
   <title>Dagelijks Overzicht</title>
   <script>
     (function () {
@@ -11,8 +11,11 @@
         var saved = JSON.parse(localStorage.getItem('dashboard_config_v3') || 'null');
         if (!saved) return;
         var root = document.documentElement;
+        var themeColors = { light: '#f6f5f4', medium: '#ececeb', dark: '#191919' };
         if (saved.theme === 'light' || saved.theme === 'medium' || saved.theme === 'dark') {
           root.dataset.theme = saved.theme;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', themeColors[saved.theme]);
         }
         root.dataset.layout = saved.threeColumnLayout ? '3' : '2';
         if (saved.articleTextSize === 'sm' || saved.articleTextSize === 'md' || saved.articleTextSize === 'lg') {
@@ -93,7 +96,7 @@
           </div>
           <div>
             <p class="figure"><span id="eur-thb-rate">–</span> <span id="target-currency-label">THB</span></p>
-            <p id="rate-updated" class="muted">Laden…</p>
+            <p id="rate-updated" class="muted" hidden></p>
           </div>
           <div class="calc">
             <p class="caption">Snel omrekenen</p>
@@ -127,7 +130,7 @@
                 <p id="w1-condition" class="condition">Laden…</p>
               </div>
             </div>
-            <a id="w1-radar-link" class="radar" href="https://www.rainviewer.com/weather-radar-map-live/thailand/chiang-rai.html" target="_blank" rel="noopener noreferrer">Radar</a>
+            <a id="w1-radar-link" class="radar" href="https://www.rainviewer.com/weather-radar-map-live/thailand/chiang-rai.html" target="_blank" rel="noopener noreferrer" aria-label="Open regenradar" title="Open regenradar"><i data-lucide="radar" aria-hidden="true"></i></a>
           </div>
           <div class="split">
             <div>
@@ -140,7 +143,7 @@
             </div>
           </div>
           <div id="w1-forecast" class="forecast"></div>
-          <p id="w1-updated" class="muted"></p>
+          <p id="w1-updated" class="muted" hidden></p>
         </section>
 
         <section id="card-weather-2" class="widget tool-panel" data-tone="signal" aria-labelledby="w2-title">
@@ -152,7 +155,7 @@
                 <p id="w2-condition" class="condition">Laden…</p>
               </div>
             </div>
-            <a id="w2-radar-link" class="radar" href="https://www.buienradar.nl/weer/noordwijk/nl/2749870" target="_blank" rel="noopener noreferrer">Buienradar</a>
+            <a id="w2-radar-link" class="radar" href="https://www.buienradar.nl/weer/noordwijk/nl/2749870" target="_blank" rel="noopener noreferrer" aria-label="Open regenradar" title="Open regenradar"><i data-lucide="radar" aria-hidden="true"></i></a>
           </div>
           <div class="split">
             <div>
@@ -165,7 +168,7 @@
             </div>
           </div>
           <div id="w2-forecast" class="forecast"></div>
-          <p id="w2-updated" class="muted"></p>
+          <p id="w2-updated" class="muted" hidden></p>
         </section>
       </div>
 
@@ -515,8 +518,8 @@
     var THEME_ORDER = ['light', 'medium', 'dark'];
     var THEME_META = {
       light: { next: 'medium', icon: 'sun', pressed: 'false', label: 'Thema: licht. Wissel naar medium.', color: '#f6f5f4' },
-      medium: { next: 'dark', icon: 'sun-medium', pressed: 'mixed', label: 'Thema: medium. Wissel naar donker.', color: '#e7d9cc' },
-      dark: { next: 'light', icon: 'moon', pressed: 'true', label: 'Thema: donker. Wissel naar licht.', color: '#02093a' }
+      medium: { next: 'dark', icon: 'sun-medium', pressed: 'mixed', label: 'Thema: medium. Wissel naar donker.', color: '#ececeb' },
+      dark: { next: 'light', icon: 'moon', pressed: 'true', label: 'Thema: donker. Wissel naar licht.', color: '#191919' }
     };
 
     function applyTheme() {
@@ -680,17 +683,6 @@
       });
     }
 
-    function updatedLabel(value) {
-      if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        var parts = value.split('-').map(Number);
-        value = new Date(parts[0], parts[1] - 1, parts[2]);
-      }
-      var date = value instanceof Date ? value : new Date(value);
-      if (Number.isNaN(date.getTime())) return 'laatst bijgewerkt';
-      var text = new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
-      return 'laatst bijgewerkt ' + text;
-    }
-
     function safeUrl(value) {
       try {
         var url = new URL(String(value), window.location.href);
@@ -747,7 +739,7 @@
     /* —— rates —— */
 
     function renderRate() {
-      var rate = state.rate || { value: null, source: 'error', label: 'Laden…' };
+      var rate = state.rate || { value: null, source: 'loading' };
       var badge = $('rate-badge');
       badge.className = 'badge';
       if (rate.source === 'manual') {
@@ -763,7 +755,10 @@
         badge.textContent = 'Live';
       }
       $('eur-thb-rate').textContent = Number.isFinite(rate.value) ? formatNumber(rate.value, 2) : '–';
-      $('rate-updated').textContent = rate.label || '';
+      var updated = $('rate-updated');
+      var failed = rate.source === 'error';
+      updated.hidden = !failed;
+      updated.textContent = failed ? 'Koers nu niet beschikbaar' : '';
       calculateCurrency();
     }
 
@@ -781,15 +776,14 @@
       if (!state.config.rate.autoFetch) {
         state.rate = {
           value: Number(state.config.rate.manualRate) || 38,
-          source: 'manual',
-          label: 'Vaste koers'
+          source: 'manual'
         };
         renderRate();
         return;
       }
       var cached = readCache().rate;
       if (!force && fresh(cached) && Number.isFinite(cached.value)) {
-        state.rate = { value: cached.value, source: 'cache', label: updatedLabel(cached.date || cached.fetchedAt) };
+        state.rate = { value: cached.value, source: 'cache' };
         renderRate();
         return;
       }
@@ -810,15 +804,15 @@
           date = backup.time_last_update_utc || new Date().toISOString();
           source = 'er-api';
         }
-        state.rate = { value: value, source: source, label: updatedLabel(date) };
+        state.rate = { value: value, source: source };
         writeCache(function (cache) {
           cache.rate = { value: value, date: date, source: source, fetchedAt: Date.now() };
         });
       } catch (error) {
         if (cached && Number.isFinite(cached.value)) {
-          state.rate = { value: cached.value, source: 'cache', label: updatedLabel(cached.date || cached.fetchedAt) };
+          state.rate = { value: cached.value, source: 'cache' };
         } else {
-          state.rate = { value: null, source: 'error', label: 'Koers nu niet beschikbaar' };
+          state.rate = { value: null, source: 'error' };
         }
       }
       renderRate();
@@ -907,14 +901,6 @@
       return safeUrl('https://www.rainviewer.com/map.html?loc=' + loc.lat + ',' + loc.lon + ',8');
     }
 
-    function radarLabel(href) {
-      try {
-        var host = new URL(href).hostname;
-        if (host.indexOf('buienradar') !== -1) return 'Buienradar';
-      } catch (error) {}
-      return 'Radar';
-    }
-
     function renderForecast(host, days) {
       host.replaceChildren();
       (days || []).forEach(function (day) {
@@ -938,13 +924,8 @@
       var loc = state.config[slot];
       $(prefix + '-title').textContent = loc.name;
       var link = $(prefix + '-radar-link');
-      var href = radarHref(loc, slot);
-      link.href = href;
-      link.textContent = radarLabel(href);
-      var icon = document.createElement('i');
-      icon.setAttribute('data-lucide', 'arrow-up-right');
-      icon.setAttribute('aria-hidden', 'true');
-      link.append(icon);
+      link.href = radarHref(loc, slot);
+      var note = $(prefix + '-updated');
       if (!record || record.status === 'error') {
         $(prefix + '-condition').textContent = 'Niet beschikbaar';
         $(prefix + '-temp').textContent = '–';
@@ -952,10 +933,13 @@
         $(prefix + '-wind').textContent = '– km/h';
         $(prefix + '-rain').textContent = '–%';
         $(prefix + '-forecast').replaceChildren();
-        $(prefix + '-updated').textContent = 'Weer nu niet beschikbaar';
+        note.hidden = false;
+        note.textContent = 'Weer nu niet beschikbaar';
         setIcon(prefix, 'cloud');
         return;
       }
+      note.hidden = true;
+      note.textContent = '';
       var view = record.data;
       var condition = weatherCondition(view.code);
       $(prefix + '-condition').textContent = condition.text;
@@ -965,7 +949,6 @@
       $(prefix + '-subtext').textContent = 'Min ' + min + ' / max ' + max;
       $(prefix + '-wind').textContent = (Number.isFinite(view.wind) ? view.wind : '–') + ' km/h';
       $(prefix + '-rain').textContent = (view.rain == null ? '–' : view.rain) + '%';
-      $(prefix + '-updated').textContent = updatedLabel(view.fetchedAt);
       renderForecast($(prefix + '-forecast'), view.days);
       setIcon(prefix, condition.icon);
     }

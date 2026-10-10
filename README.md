@@ -8,7 +8,7 @@ Persoonlijk dagdashboard voor Chiang Rai en Nederland, in het warme Notion-ontwe
 - Wisselkoers EUR/THB met omrekenen van euro naar baht en terug. Eerst Frankfurter, daarna ExchangeRate-API. Een vaste koers kan ook.
 - Weer voor twee plaatsen (standaard Chiang Rai en Noordwijk aan Zee): temperatuur, icoon, wind, neerslagkans, minimum en maximum, plus drie dagen vooruit. De radarlink volgt de plaats, tenzij je zelf een URL invult.
 - Nederlands nieuws en sportnieuws van NOS, per rubriek, met tijd, titel en korte samenvatting. Een foto bij het eerste artikel kan aan of uit.
-- Drie thema's: licht, medium en donker. Medium is warmer papier; donker gebruikt midnight met het cyaan van de Pulse-logo's.
+- Drie thema's: licht, medium en donker. Medium is lichtgrijs. Donker is bijna zwart, niet marineblauw.
 - Lay-out: op een telefoon één kolom. Op een breed scherm twee kolommen, of drie met de widgets rechts.
 - Tekstgrootte van artikelen in drie stappen. Foto's blijven even groot.
 - Zichtbaarheid per klok, kaart, nieuwskolom en rubriek. Verborgen onderdelen laten geen leeg gat achter.
